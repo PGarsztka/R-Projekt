@@ -1,0 +1,197 @@
+---
+title: "Rapaort"
+author: "Piotr Garsztka"
+date: "18 stycznia 2017"
+output: html_document
+---
+# Spis treœci
+1. [Wstêp]
+2. [Opis danych]
+3. [Wnioski]
+4. [Wczytywanie i przetwarzanie danych]
+5. [Podsumowanie rozmiaru zbioru i podstawowe statystyki]
+6. [Analiza wartoœci atrybutów]
+7. [Korelacje miêdzy zmiennymi]
+
+## Wstêp
+
+Celem analizy jest okreœlenie jakie mog¹ byæ g³ówne przyczyny stopniowego zmniejszania siê d³ugoœci œledzi oceanicznych wy³owionych w Europie.
+
+## Opis danych
+Na przestrzeni ostatnich lat zauwa¿ono stopniowy spadek rozmiaru œledzia oceanicznego wy³awianego w Europie. Do analizy zebrano pomiary œledzi i warunków w jakich ¿yj¹ z ostatnich 60 lat. Dane by³y pobierane z po³owów komercyjnych jednostek. W ramach po³owu jednej jednostki losowo wybierano od 50 do 100 sztuk trzyletnich œledzi.
+
+Kolumny w zbiorze danych oznaczaj¹:
+
+  - **length**: d³ugoœæ z³owionego œledzia [cm];
+  - **cfin1**: dostêpnoœæ planktonu [zagêszczenie Calanus finmarchicus gat. 1];
+  - **cfin2**: dostêpnoœæ planktonu [zagêszczenie Calanus finmarchicus gat. 2];
+  - **chel1**: dostêpnoœæ planktonu [zagêszczenie Calanus helgolandicus gat. 1];
+  - **chel2**: dostêpnoœæ planktonu [zagêszczenie Calanus helgolandicus gat. 2];
+  - **lcop1**: dostêpnoœæ planktonu [zagêszczenie wid³onogów gat. 1];
+  - **lcop2**: dostêpnoœæ planktonu [zagêszczenie wid³onogów gat. 2];
+  - **fbar**: natê¿enie po³owów w regionie [u³amek pozostawionego narybku];
+  - **recr**: roczny narybek [liczba œledzi];
+  - **cumf**: ³¹czne roczne natê¿enie po³owów w regionie [u³amek pozostawionego narybku];
+  - **totaln**: ³¹czna liczba ryb z³owionych w ramach po³owu [liczba œledzi];
+  - **sst**: temperatura przy powierzchni wody [°C];
+  - **sal**:  poziom zasolenia wody [Knudsen ppt];
+  - **xmonth**: miesi¹c po³owu [numer miesi¹ca];
+  - **nao**: oscylacja pó³nocnoatlantycka [mb].
+
+## Wnioski
+?
+
+## Wczytywanie i przetwarzanie danych
+
+ - Wykorzystane biblioteki.
+
+```{r biblioteki, message=FALSE}
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+```
+
+ - Wczytywanie danych z pliku.
+
+```{r wczytaj, cache=TRUE}
+#Wczytywanie danych z pliku.
+dane <- read.csv("sledzie.csv",header = TRUE, sep = ",", dec = ".", na.strings = "?")
+
+#Przyk³adowe dane.
+knitr::kable(head(dane))
+```
+
+ - Przerwrzanie danych.
+ 
+```{r przetwarzanie, cache=TRUE}
+#Wystêpowanie brakuj¹cych danych.
+sapply(dane, function(x) sum(is.na(x)))
+
+#Usuniêcie kolumny X.
+dane_prz <- select(dane, length:nao)
+head(dane_prz)
+
+#Zast¹pienie brakuj¹cych wartoœci œrednia.
+for(i in 1:ncol(dane_prz)){
+  dane_prz[is.na(dane_prz[,i]), i] <- mean(dane_prz[,i], na.rm = TRUE)
+}
+
+#Sprawdzenie czy nadal wystêpuj¹ brakuj¹ce wartoœci.
+sapply(dane_prz, function(x) sum(is.na(x)))
+
+#Dane po przetworzeniu.
+knitr::kable(head(dane_prz))
+```
+
+## Podsumowanie rozmiaru zbioru i podstawowe statystyki
+
+ - Podstawowe dane.
+
+```{r dane_pod, echo=FALSE}
+str(dane_prz)
+```
+
+ - Podstawowe statystyki.
+
+```{r statystyki_pod, echo=FALSE}
+summary(dane_prz)
+```
+
+## Analiza wartoœci atrybutów
+
+ - D³ugoœæ z³owionego œledzia [cm];
+
+```{r a_length}
+ggplot(dane_prz, aes(x=length)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+
+ - Dostêpnoœæ planktonu [zagêszczenie Calanus finmarchicus gat. 1];
+ 
+```{r a_cfin1}
+ggplot(dane_prz, aes(x=cfin1)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Dostêpnoœæ planktonu [zagêszczenie Calanus finmarchicus gat. 2];
+ 
+```{r a_cfin2}
+ggplot(dane_prz, aes(x=cfin2)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Dostêpnoœæ planktonu [zagêszczenie Calanus helgolandicus gat. 1];
+
+```{r a_chel1}
+ggplot(dane_prz, aes(x=chel1)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Dostêpnoœæ planktonu [zagêszczenie Calanus helgolandicus gat. 2];
+ 
+```{r a_chel2}
+ggplot(dane_prz, aes(x=chel2)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Dostêpnoœæ planktonu [zagêszczenie wid³onogów gat. 1];
+ 
+```{r a_lcop1}
+ggplot(dane_prz, aes(x=lcop1)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Dostêpnoœæ planktonu [zagêszczenie wid³onogów gat. 2];
+ 
+```{r a_lcop2}
+ggplot(dane_prz, aes(x=lcop2)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Natê¿enie po³owów w regionie [u³amek pozostawionego narybku];
+ 
+```{r a_fbar}
+ggplot(dane_prz, aes(x=fbar)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Roczny narybek [liczba œledzi];
+ 
+```{r a_recr, cache=TRUE, message=FALSE}
+ggplot(dane_prz, aes(recr)) + geom_histogram(aes(y=..density..), colour="black", fill="white") + geom_density(alpha=0.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - £¹czna liczba ryb z³owionych w ramach po³owu [liczba œledzi]
+ 
+```{r a_cumf}
+ggplot(dane_prz, aes(x=cumf)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - £¹czne roczne natê¿enie po³owów w regionie [u³amek pozostawionego narybku];
+ 
+```{r a_totaln, cache=TRUE, message=FALSE}
+ggplot(dane_prz, aes(totaln)) + geom_histogram(aes(y=..density..), colour="black", fill="white") + geom_density(alpha=0.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Temperatura przy powierzchni wody [°C];
+ 
+```{r a_sst}
+ggplot(dane_prz, aes(x=sst)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Poziom zasolenia wody [Knudsen ppt];
+ 
+```{r a_sal}
+ggplot(dane_prz, aes(x=sal)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Miesi¹c po³owu [numer miesi¹ca];
+ 
+```{r a_xmonth}
+ggplot(dane_prz, aes(x=xmonth)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+ 
+ - Oscylacja pó³nocnoatlantycka [mb].
+ 
+```{r a_nao}
+ggplot(dane_prz, aes(x=nao)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
+```
+
+## Korelacje miêdzy zmiennymi
+
+```{r koleracja, cache=TRUE}
+correlation <- cor(dane_prz, use="complete.obs", method="pearson")
+corrplot(correlation, method="pie")
+```
