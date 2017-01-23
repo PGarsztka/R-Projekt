@@ -12,6 +12,9 @@ output: html_document
 5. [Podsumowanie rozmiaru zbioru i podstawowe statystyki]
 6. [Analiza wartoœci atrybutów]
 7. [Korelacje miêdzy zmiennymi]
+8. [Interaktywny wykres]
+9. [Regresor przewiduj¹cy rozmiar œledzia]
+10. [Analiza wa¿noœci atrybutów]
 
 ## Wstêp
 
@@ -39,7 +42,7 @@ Kolumny w zbiorze danych oznaczaj¹:
   - **nao**: oscylacja pó³nocnoatlantycka [mb].
 
 ## Wnioski
-?
+Po przeprowadzeniu analizy zbioru danchy mo¿emy stwierdziæ ¿e przyczyn¹ zmniejszania siê w od pewnego momêtu rozmiaru œledzia jest zwiêkszona temperatura przy powierzchni wody.
 
 ## Wczytywanie i przetwarzanie danych
 
@@ -49,6 +52,10 @@ Kolumny w zbiorze danych oznaczaj¹:
 library(dplyr)
 library(ggplot2)
 library(corrplot)
+library(plotly)
+library(knitr)
+library(rpart)
+library(randomForest)
 ```
 
  - Wczytywanie danych z pliku.
@@ -101,97 +108,147 @@ summary(dane_prz)
 
  - D³ugoœæ z³owionego œledzia [cm];
 
-```{r a_length}
+```{r a_length, echo=FALSE}
 ggplot(dane_prz, aes(x=length)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
 
  - Dostêpnoœæ planktonu [zagêszczenie Calanus finmarchicus gat. 1];
  
-```{r a_cfin1}
+```{r a_cfin1, echo=FALSE}
 ggplot(dane_prz, aes(x=cfin1)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Dostêpnoœæ planktonu [zagêszczenie Calanus finmarchicus gat. 2];
  
-```{r a_cfin2}
+```{r a_cfin2, echo=FALSE}
 ggplot(dane_prz, aes(x=cfin2)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Dostêpnoœæ planktonu [zagêszczenie Calanus helgolandicus gat. 1];
 
-```{r a_chel1}
+```{r a_chel1, echo=FALSE}
 ggplot(dane_prz, aes(x=chel1)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Dostêpnoœæ planktonu [zagêszczenie Calanus helgolandicus gat. 2];
  
-```{r a_chel2}
+```{r a_chel2, echo=FALSE}
 ggplot(dane_prz, aes(x=chel2)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Dostêpnoœæ planktonu [zagêszczenie wid³onogów gat. 1];
  
-```{r a_lcop1}
+```{r a_lcop1, echo=FALSE}
 ggplot(dane_prz, aes(x=lcop1)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Dostêpnoœæ planktonu [zagêszczenie wid³onogów gat. 2];
  
-```{r a_lcop2}
+```{r a_lcop2, echo=FALSE}
 ggplot(dane_prz, aes(x=lcop2)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Natê¿enie po³owów w regionie [u³amek pozostawionego narybku];
  
-```{r a_fbar}
+```{r a_fbar, echo=FALSE}
 ggplot(dane_prz, aes(x=fbar)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Roczny narybek [liczba œledzi];
  
-```{r a_recr, cache=TRUE, message=FALSE}
+```{r a_recr, cache=TRUE, message=FALSE, echo=FALSE}
 ggplot(dane_prz, aes(recr)) + geom_histogram(aes(y=..density..), colour="black", fill="white") + geom_density(alpha=0.2, fill="#FF6666") + theme_minimal()
 ```
  
  - £¹czna liczba ryb z³owionych w ramach po³owu [liczba œledzi]
  
-```{r a_cumf}
+```{r a_cumf, echo=FALSE}
 ggplot(dane_prz, aes(x=cumf)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - £¹czne roczne natê¿enie po³owów w regionie [u³amek pozostawionego narybku];
  
-```{r a_totaln, cache=TRUE, message=FALSE}
+```{r a_totaln, cache=TRUE, message=FALSE, echo=FALSE}
 ggplot(dane_prz, aes(totaln)) + geom_histogram(aes(y=..density..), colour="black", fill="white") + geom_density(alpha=0.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Temperatura przy powierzchni wody [°C];
  
-```{r a_sst}
+```{r a_sst, echo=FALSE}
 ggplot(dane_prz, aes(x=sst)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Poziom zasolenia wody [Knudsen ppt];
  
-```{r a_sal}
+```{r a_sal, echo=FALSE}
 ggplot(dane_prz, aes(x=sal)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Miesi¹c po³owu [numer miesi¹ca];
  
-```{r a_xmonth}
+```{r a_xmonth, echo=FALSE}
 ggplot(dane_prz, aes(x=xmonth)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
  
  - Oscylacja pó³nocnoatlantycka [mb].
  
-```{r a_nao}
+```{r a_nao, echo=FALSE}
 ggplot(dane_prz, aes(x=nao)) + geom_histogram(aes(y=..density..), binwidth=.5, colour="black", fill="white") + geom_density(alpha=.2, fill="#FF6666") + theme_minimal()
 ```
 
 ## Korelacje miêdzy zmiennymi
 
-```{r koleracja, cache=TRUE}
+```{r koleracja, cache=TRUE, echo=FALSE}
 correlation <- cor(dane_prz, use="complete.obs", method="pearson")
 corrplot(correlation, method="pie")
+```
+
+## Interaktywny wykres
+
+```{r wykres_int, message=FALSE, echo=FALSE}
+d <- dane[sample(nrow(dane), 1000), ]
+
+p <- ggplot(data = d, aes(x = X, y = length)) + geom_point() + geom_smooth() + ggtitle("Wykres przedstawiajacy zmianê rozmiaru œledzi w czasie") + xlab("Czas") + ylab("D³ugoœæ")
+ 
+(gg <- ggplotly(p))
+```
+
+## Regresor przewiduj¹cy rozmiar œledzia
+
+```{r regresor, cache=TRUE}
+#R^2
+a <- lm(length ~ ., data = dane_prz)
+summary(a)$r.squared
+
+#RMSE
+rmse <- function(error)
+{
+    sqrt(mean(error^2))
+}
+
+rmse(a$residuals)
+
+
+# grow tree 
+fit <- rpart(length ~ ., data = dane_prz, method = "anova")
+
+printcp(fit) # display the results 
+plotcp(fit) # visualize cross-validation results 
+summary(fit) # detailed summary of splits
+
+# create additional plots
+par(mfrow=c(1,1)) # two plots on one page
+rsq.rpart(fit) # visualize cross-validation results 
+
+# plot tree 
+plot(fit, uniform=TRUE, main = "Drzewo regresji dla rozmiaru œledzi")
+text(fit, use.n=TRUE, all=TRUE, cex = .8)
+```
+
+## Analiza wa¿noœci atrybutów
+
+```{r waznosc_atr, cache=TRUE}
+fit2 <- randomForest(length ~ ., data = dane_prz)
+print(fit2) # view results
+importance(fit2) # importance of each predictor 
 ```
